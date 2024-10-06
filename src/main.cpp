@@ -127,7 +127,6 @@ void draw_bg(void) {
 int main(void) {
     set_bg();
 
-
     while (window.isOpen()) {
         sf::Event event;
         while (window.pollEvent(event)) {
