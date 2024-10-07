@@ -10,7 +10,7 @@ MAIN := demo
 VPATH := src:src/*.cpp
 
 OBJ_DIR := obj
-_OBJS := main.o
+_OBJS := main.o TileMap.o Man.o
 OBJS := $(patsubst %, $(OBJ_DIR)/%, $(_OBJS) )
 
 .PHONY:	depend clean
