@@ -3,16 +3,140 @@
 #include <iostream>
 
 const int SCALE = 32;
-const int width = (SCALE*32);
-const int height = (SCALE*24);
-sf::RenderWindow window(sf::VideoMode(width, height),
-        "Unga Yngvwn Lyngu Simulator");
 
-void handle_event(sf::Event event) {
-    switch (event.type) {
+const int width = 32*SCALE;
+const int height = 24*SCALE;
+const int ground = (2*height)/3;
+// values scaled down; for array use
+const int wscale = width/SCALE;
+const int hscale = height/SCALE;
+const int gscale = (2*hscale)/3;
+
+sf::RenderWindow window(sf::VideoMode(width, height),
+        "Dyn Taflu Roc Simulator");
+
+class TileMap {
+private:
+    enum {
+        T_GROUND,
+        T_SKY,
+        COUNT,
+    };
+    sf::Texture textures[COUNT];
+    int tiles[hscale][wscale];
+
+    void load(sf::Texture *t, int which) {
+        std::string file;
+        switch (which) {
+            case T_GROUND:
+                file = "assets/grnd_tile.png";
+                break;
+            case T_SKY:
+                file = "assets/sky_tile.png";
+                break;
+            default:
+                break;
+        }
+
+        if (!t->loadFromFile(file)) {
+            std::cout << "Failure to load texture asset `" << file << "`\n";
+            exit(1);
+        }
+    }
+
+public:
+    TileMap() {
+        for (int i = 0; i < COUNT; i++) {
+            load(&textures[i], i);
+        }
+
+        for (int y = 0; y < hscale; y++) {
+            for (int x = 0; x < wscale; x++) {
+                tiles[y][x] = y > gscale ? T_GROUND : T_SKY;
+            }
+        }
+    }
+
+    void draw_to(sf::RenderWindow *window) {
+        sf::Sprite tile;
+        for (int y = 0; y < hscale; y++) {
+            for (int x = 0; x < wscale; x++) {
+                switch (tiles[y][x]) {
+                    case T_SKY:
+                        tile.setTexture(textures[T_SKY]);
+                        break;
+                    case T_GROUND:
+                        tile.setTexture(textures[T_GROUND]);
+                        break;
+                    default:
+                        break;
+                }
+
+                tile.setPosition(x*SCALE, y*SCALE);
+                window->draw(tile);
+            }
+        }
+    }
+
+    void update_tiles(void);
+};
+
+class Man {
+public:
+    enum {
+        STAND,
+        THROW,
+        COUNT,
+    };
+    sf::Texture textures[COUNT];
+    int state;
+
+    int x;
+    int y;
+
+    Man(int x, int y) {
+        this->x = x;
+        this->y = y;
+        state = STAND;
+
+        for (int i = 0; i < COUNT; i++) {
+            load(&textures[i], i);
+        }
+    }
+
+    void draw_to(sf::RenderWindow *window) {
+        sf::Sprite sprite;
+        sprite.setTexture(textures[state]);
+        sprite.setPosition(x, y);
+        window->draw(sprite);
+    }
+
+private:
+    void load(sf::Texture *t, int which) {
+        std::string file;
+        switch (which) {
+            case STAND:
+                file = "assets/guy_tile.png";
+                break;
+            case THROW:
+                file = "assets/throw_tile.png";
+                break;
+            default:
+                break;
+        }
+
+        if (!t->loadFromFile(file)) {
+            std::cout << "Failure to load texture asset `" << file << "`\n";
+            exit(1);
+        }
+    }
+};
+
+void handle_event(sf::RenderWindow *window, sf::Event e) {
+    switch (e.type) {
         case sf::Event::Closed:
         {
-            window.close();
+            window->close();
             break;
         }
 
@@ -21,123 +145,34 @@ void handle_event(sf::Event event) {
             if (sf::Keyboard::isKeyPressed(sf::Keyboard::A)) {
                 ;
             }
+            break;
+        }
 
-            if (sf::Keyboard::isKeyPressed(sf::Keyboard::D)) {
-                ;
-            }
+        case sf::Event::MouseButtonPressed:
+        {
             break;
         }
 
         default:
             break;
-    }
-}
-
-const int twidth = width/SCALE;
-const int theight = height/SCALE;
-int bg_array[theight][twidth];
-enum {
-    T_SKY,
-    T_GRND,
-    T_GUY
-};
-
-void set_bg(void) {
-    srand(time(0));
-
-    for (int y = 0; y < theight; y++) {
-        for (int x = 0; x < twidth; x++) {
-            if (y < (2*theight/3)) {
-                bg_array[y][x] = T_SKY;
-            } else {
-                bg_array[y][x] = T_GRND;
-            }
-        }
-    }
-
-    bg_array[((2*theight)/3)-1][twidth/2] = T_GUY;
-}
-
-void load(sf::Texture *t, int which) {
-    std::string file;
-    std::string type;
-    switch (which) {
-        case T_SKY:
-            type = "sky";
-            file = "assets/sky_tile.png";
-            break;
-        case T_GRND:
-            type = "ground";
-            file = "assets/grnd_tile.png";
-            break;
-        case T_GUY:
-            type = "cave guy";
-            file = "assets/guy_tile.png";
-            break;
-        default:
-            std::cout << "Unknown asset\n";
-    }
-
-    if (!t->loadFromFile(file)) {
-        std::cout << "Failure to open asset `" << type << "`\n";
-        exit(1);
-    }
-}
-
-void draw_bg(void) {
-    // TODO only needs to happen once
-    sf::Texture sky, grnd, guy;
-    load(&sky, T_SKY);
-    load(&grnd, T_GRND);
-    load(&guy, T_GUY);
-
-    sf::Sprite tile;
-    for (int y = 0; y < theight; y++) {
-        for (int x = 0; x < twidth; x++) {
-
-            switch (bg_array[y][x]) {
-                case T_SKY:
-                    tile.setTexture(sky);
-                    window.draw(tile);
-                    break;
-
-                case T_GRND:
-                    tile.setTexture(grnd);
-                    window.draw(tile);
-                    break;
-
-                case T_GUY:
-                    tile.setTexture(sky);
-                    window.draw(tile);
-                    tile.setTexture(guy);
-                    window.draw(tile);
-                    break;
-
-                default:
-                    std::cout << "[INFO] error value in array\n";
-                    break;
-            }
-
-            tile.setPosition(x*SCALE, y*SCALE);
-            window.draw(tile);
-        }
     }
 }
 
 int main(void) {
-    set_bg();
+    TileMap env;
+    Man man(width/2, ground);
 
     while (window.isOpen()) {
         sf::Event event;
         while (window.pollEvent(event)) {
-            handle_event(event);
+            handle_event(&window, event);
         }
 
         window.clear();
-        draw_bg();
+        env.draw_to(&window);
+        man.draw_to(&window);
         window.display();
     }
 
     return 0;
 }
-
