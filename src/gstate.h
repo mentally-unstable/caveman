@@ -13,20 +13,26 @@ const int wscale = width/SCALE;
 const int hscale = height/SCALE;
 const int gscale = (2*hscale)/3;
 
-class TileMap {
-private:
-    enum {
-        T_GROUND,
-        T_SKY,
-        COUNT,
-    };
-    sf::Texture textures[COUNT];
+enum {
+    TGROUND,
+    TSKY,
+    // TROCK,
+
+    MSTAND,
+    MTHROW,
+
+    COUNT,
+};
+sf::Texture textures[COUNT];
+
+struct State {
     int tiles[hscale][wscale];
 
-    void load(sf::Texture *t, int which);
+    sf::Vector2i man;
+    int man_state;
+    sf::Vector2i rock;
 
-public:
-    TileMap();
-    void draw_to(sf::RenderWindow *window);
-    void update_tiles(void);
+    int thrown;
+    std::time_t start;
+    std::time_t eta;
 };
