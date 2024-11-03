@@ -1,0 +1,103 @@
+// hello
+#include "state.h"
+#include "raylib.h"
+#include <unistd.h>
+#include <stdio.h>
+#include <math.h>
+#include <time.h>
+
+void handle_event(void);
+void draw_dots(void);
+void generate_dots(void);
+
+#define MAXDOTS 40
+#define WIDTH 1000
+#define HEIGHT 800
+
+Vector2 pos;
+Vector2 origin = (Vector2) {0, HEIGHT-20};
+Vector2 dot_array[MAXDOTS];
+int dotc;
+time_t start;
+
+int main(void) {
+    InitWindow(WIDTH, HEIGHT, "Dyn Taflu Roc TestSim");
+    // SetWindowOpacity(0.9);
+
+    while (!WindowShouldClose()) {
+        pos = GetMousePosition();
+
+        handle_event();
+
+        BeginDrawing();
+        ClearBackground(BLACK);
+
+        DrawLineV(origin, (Vector2) {pos.x, pos.y}, GREEN);
+        DrawRectangleV(origin, (Vector2) {10,20}, BLUE);
+        generate_dots();
+        draw_dots();
+
+        EndDrawing();
+    }
+
+    CloseWindow();
+    return 0;
+}
+
+void handle_event(void) {
+    if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON)) {
+        start = time(NULL);
+        // generate_dots();
+    }
+
+    if (IsKeyDown(KEY_A)) {
+        origin.x--;
+    }
+
+    if (IsKeyDown(KEY_D)) {
+        origin.x++;
+    }
+}
+
+/*
+   dx = Vx * cos(theta) * t;
+   dy = Vy * sin(theta) * t - (a * pow(t, 2)/2);
+   */
+void generate_dots(void) {
+    // angle elevation to cursor
+    // float theta = atan((pos.y/pos.x));
+    float ox = pos.x-origin.x;
+    float oy = pos.x+origin.y;
+    float theta = atan(oy/ox);
+
+    if (pos.x < origin.x)
+        theta = 180 + theta;
+
+    float ux = ox/10;
+    if (ux < 0) ux *= -1;
+
+    float uy = oy/2;
+    time_t dt;
+
+    float x, y;
+    for (int i = 0; i < MAXDOTS; i++) {
+        if (time(0) - start >= 1)
+            dt = time(0) - start;
+
+        x = ux * cos(theta) * i;
+        printf("X: %f * %f * %f = %f\n", ux, cos(theta), i, x);
+
+        float a = (uy * sin(theta) * i);
+        float b = (9.81 * (pow(i, 2)))/2;
+        y = a-b;
+        printf("Y: %f * %f * %f = %f\n\n", uy, sin(theta), i, a);
+
+        dot_array[i] = (Vector2) {origin.x+x, origin.y-y};
+    }
+}
+
+void draw_dots(void) {
+    for (int i = 0; i < MAXDOTS; i++) {
+        DrawCircleV(dot_array[i], 2, RED);
+    }
+}
