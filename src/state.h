@@ -7,8 +7,8 @@
 
 const int SCALE = 32;
 
-const int width = 32*SCALE;
-const int height = 24*SCALE;
+// const int width = 32*SCALE;
+// const int height = 24*SCALE;
 const int ground = (2*height)/3;
 // values scaled down; for array use
 const int wscale = width/SCALE;
